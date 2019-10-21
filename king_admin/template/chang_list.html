@@ -1,0 +1,208 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+  <div class="text-center" style="margin-bottom: 20px">
+    <h2>
+      {{ title|default("") }}
+    </h2>
+  </div>
+  <div id="toolbar">
+    <div class="form-inline">
+      {% for search_field in search_fields %}
+        {{ search_field.to_representation() }}
+      {% endfor %}
+      {% if search_fields %}
+        <button type="submit" class="btn btn-info btn-sm pull-right" id="btn_search" style="margin-right: 100px">
+          查询
+        </button>
+      {% endif %}
+    </div>
+    <div class="row">
+      {% if add_btn %}
+        <button type="submit" class="btn btn-info btn-sm" id="btn_add" style="margin-left: 150px;"
+                data-toggle="modal" data-target="#add_btn">
+          增加
+        </button>
+      {% endif %}
+
+    </div>
+  </div>
+  <table
+      id="table"
+      data-toolbar="#toolbar"
+      data-pagination="true"
+      data-page-list="[10, 25, 50, 100, all]"
+      data-side-pagination="server"
+      data-url="{{ data_url }}"
+      data-click-to-select="true"
+      data-ajax-options="ajaxOptions"
+  >
+  </table>
+
+  {% if add_btn %}
+    <div class="modal fade" id="add_btn" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">添加数据</h4>
+          </div>
+          <div class="modal-body">
+            {% for field in add_btn %}
+              <div class="form-group">
+                {{ field.label }}
+                {% if field.flags.required %}
+                  <span style="color: red;font-size: 16px">*</span>
+                {% endif %}
+                {{ field }}
+                <span class="text-danger"></span>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            <button type="button" class="btn btn-primary" onclick="add_save()">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if options.extra %}
+    {% include options.extra %}
+  {% endif %}
+
+{% endblock %}
+
+{% block js %}
+  {% if options.js %}
+    <script src="/static/{{ options.js }}"></script>
+  {% endif %}
+
+  <script>
+    // 解决ajax发送数组参数会多[] 问题
+    window.ajaxOptions = {
+      traditional: true,
+      beforeSend: function (xhr) {
+        NProgress.start();
+      }
+    };
+
+    let $table = $('#table');
+
+    // 初始化bootstrap-table函数
+    function initTable() {
+      $table.bootstrapTable('destroy').bootstrapTable({
+        locale: "zh-CN",
+        columns: [
+          // 用来渲染复选框
+          {% if checkbox %}
+            {
+              field: 'state',
+              checkbox: true
+            },
+          {% endif %}
+
+          // 用来渲染表格数据
+          {% for item in list_display %}
+            {
+              title: '{{ item[0] }}',
+              field: '{{ item[1] }}'
+            },
+          {% endfor %}
+
+          // 用来渲染操作列
+          {% if options %}
+            {
+              field: 'action',
+              title: '操作',
+              align: 'center',
+              clickToSelect: false,
+              events: operateEvents,
+              formatter: operateFormatter
+            }
+          {% endif %}
+
+        ],
+
+        responseHandler: function (response) {
+          NProgress.done();
+          if (response.code === 200) {
+            return response.data;
+          } else {
+            alert(response.msg);
+            return false;
+          }
+
+        }
+      });
+    }
+
+    // 点击搜索按钮
+    {% if search_fields %}
+      $("#btn_search").click(function () {
+        function queryParams(params) {
+          {% for search_field in search_fields %}
+            params.{{ search_field }} = $('#id_{{ search_field }}').val();
+          {% endfor %}
+          return params
+        }
+
+        $table.bootstrapTable('refreshOptions', {
+          queryParams: queryParams,
+          pageNumber: 1,
+        });
+      });
+    {% endif %}
+
+    $(function () {
+      initTable()
+    });
+
+    // 增加数据
+    {% if add_btn %}
+      $('#add_btn').on('hidden.bs.modal', function (e) {
+        $('#add_btn .form-group').children(".text-danger").text("");
+        $('#add_btn .form-group').children("input").val("");
+      });
+
+      function add_save() {
+        $('#add_btn .form-group').children(".text-danger").text("");
+        $.ajax({
+          url: '{{ add_url }}',
+          data: {
+            form_class: '{{ add_btn.__class__.__name__ }}',
+            {% for field in add_btn %}
+              {# # TODO 这里的判断可能会少 #}
+              {% if field.type=="BooleanField" %}
+                {{ field.name }}: $('#{{ field.name }}').is(':checked'),
+              {% else %}
+                {{ field.name }}: $('#{{ field.name }}').val(),
+              {% endif %}
+            {% endfor %}
+          },
+          beforeSend:function (xhr) {
+            NProgress.start();
+          },
+          success:response => {
+            NProgress.done();
+            if (response.code == 200) {
+              alert(response.msg);
+              $('#add_btn').modal('hide');
+              $('#add_btn .form-group').children("input").val("");
+              $table.bootstrapTable('refresh');
+            } else {
+              let errorMsgs = response.data
+              for (let i in errorMsgs) {
+                $(`#${i}`).next().text(errorMsgs[i]);
+              }
+            }
+          }
+      })
+
+      }
+    {% endif %}
+
+  </script>
+{% endblock %}

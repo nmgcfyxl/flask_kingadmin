@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>后台管理系统</title>
+  <link rel="stylesheet" href="/static/lib/jquerydateTime/dateTime.css">
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/static/lib/bootstrap-table/bootstrap-table.min.css">
+  <link rel="stylesheet" href="/static/lib/bootstrap-multiselect/bootstrap-multiselect.css">
+  <link rel="stylesheet" href="/static/lib/nprogress/nprogress.css">
+
+  <script src="/static/js/jquery-3.4.1.min.js"></script>
+  <script src="/static/lib/jquerydateTime/dateTime.min.js"></script>
+  <script src="/static/lib/bootstrap-multiselect/bootstrap-multiselect.js"></script>
+  <script src="/static/lib/nprogress/nprogress.js"></script>
+  <style>
+    .multiselect-native-select {
+      display: inline-block;
+    }
+  </style>
+  {% block css %}
+
+  {% endblock %}
+</head>
+<body>
+
+<div class="container-fluid">
+  {% block content %}
+
+  {% endblock %}
+</div>
+
+<script src="/static/js/bootstrap.min.js"></script>
+<script src="/static/lib/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="/static/lib/bootstrap-table/bootstrap-table-locale-all.min.js"></script>
+
+
+{% block js %}
+
+{% endblock %}
+</body>
+</html>
