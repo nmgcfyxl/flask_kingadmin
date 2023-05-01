@@ -1,6 +1,6 @@
 Babel==2.9.1
 Click==7.0
-Flask==1.1.1
+Flask==2.3.2
 Flask-Babel==0.12.2
 Flask-WTF==0.14.2
 itsdangerous==1.1.0
